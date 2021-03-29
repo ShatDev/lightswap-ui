@@ -1,16 +1,17 @@
-import {Percent, Token} from "@uniswap/sdk"
+import {Pair, Percent, Token, TokenAmount, Trade} from "@uniswap/sdk"
 import React, {useEffect, useState} from "react"
 import {BigNumber, Contract} from "ethers"
 import Config from "../config"
 import erc20Interface from "../abis/ERC20.json"
 import {useWeb3React} from "@web3-react/core"
+import Helpers from "../helpers"
 
 export default function Swap(): JSX.Element {
     const web3React = useWeb3React()
 
     const signer = web3React.library ? web3React.library.getSigner(web3React.account).connectUnchecked() : null
-    console.log("web3React.account")
-    console.log(web3React.account)
+
+    const [recipientAddress, setRecipientAddress] = useState(web3React.account ? Helpers.checksumAddress(web3React.account) : "")
 
     // Input token state
     const [inputToken, setInputToken] = useState<Token | null>(null)
@@ -26,13 +27,18 @@ export default function Swap(): JSX.Element {
     const [slippageTolerance, setSlippageTolerance] = useState<Percent | null>(null)
     const [deadlineInMinutes, setDeadlineInMinutes] = useState<number>(20)
 
+    // Recipient address
+    useEffect(() => {
+        setRecipientAddress(web3React.account || "")
+    }, [web3React.account])
+
     // Set input token
     useEffect(() => {
         (async () => {
-            if (inputTokenAddress.length > 0) {
+            if (inputTokenAddress.length === 42) {
                 const token = new Contract(inputTokenAddress, erc20Interface.abi, signer)
 
-                setInputToken(new Token(Config.chainId, inputTokenAddress, await token.decimals(), await token.symbol(), await token.name()))
+                setInputToken(new Token(Config.chainId, Helpers.checksumAddress(inputTokenAddress), await token.decimals(), await token.symbol(), await token.name()))
             }
         })()
     }, [inputTokenAddress])
@@ -40,21 +46,55 @@ export default function Swap(): JSX.Element {
     // Set output token
     useEffect(() => {
         (async () => {
-            if (outputTokenAddress.length > 0) {
+            if (outputTokenAddress.length === 42) {
                 const token = new Contract(outputTokenAddress, erc20Interface.abi, signer)
 
-                setOutputToken(new Token(Config.chainId, outputTokenAddress, await token.decimals(), await token.symbol(), await token.name()))
+                setOutputToken(new Token(Config.chainId, Helpers.checksumAddress(outputTokenAddress), await token.decimals(), await token.symbol(), await token.name()))
             }
         })()
     }, [outputTokenAddress])
 
     useEffect(() => {
-        // TODO: Calculate min. output token amount
+        // Find best trade
+        (async () => {
+            if (inputToken && outputToken) {
+                let pair
+                try {
+                    pair = new Pair(new TokenAmount(inputToken, inputTokenAmount.toString()), new TokenAmount(outputToken, outputTokenAmount.toString()))
+                } catch (e) {
+                    console.error(e)
+                }
+
+                if (pair) {
+                    const bestTradeExactIn = Trade.bestTradeExactIn([pair], new TokenAmount(inputToken, "10000000000"), outputToken)
+
+                    // TODO: Suggest trade
+                    console.log(bestTradeExactIn)
+                }
+            }
+        })()
     }, [inputTokenAmount])
 
     // Methods
-    const swap = async () => {
+    const swap = async (): Promise<void> => {
+        // Validate input
+        if (!recipientAddress || !inputToken || inputToken?.address.length === 0 || !outputToken || outputToken?.address.length === 0) {
+            return
+        }
+
         // TODO: Implement swap functionality
+        const path = [inputToken?.address, outputToken?.address]
+        const to = Helpers.checksumAddress(recipientAddress)
+        const deadline = Math.floor(Date.now() / 1000) + 60 * deadlineInMinutes // {deadlineInMinutes} minutes from the current Unix time
+
+        console.log("path")
+        console.log(path)
+
+        console.log("to")
+        console.log(to)
+
+        console.log("deadline")
+        console.log(deadline)
     }
 
     return (
@@ -75,7 +115,7 @@ export default function Swap(): JSX.Element {
                                         </select>
                                     </div>
                                     <div className="list-group-item bg-light">
-                                        <p><strong>From</strong></p>
+                                        <p><strong>Input Token</strong></p>
                                         <div className="row">
                                             <div className="col-md-4">
                                                 <div className="form-group">
@@ -108,7 +148,7 @@ export default function Swap(): JSX.Element {
                                         </div>
                                     </div>
                                     <div className="list-group-item bg-light">
-                                        <p><strong>To</strong></p>
+                                        <p><strong>Output Token</strong></p>
                                         <div className="row">
                                             <div className="col-md-4">
                                                 <div className="form-group">
@@ -180,6 +220,12 @@ export default function Swap(): JSX.Element {
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="inputTokenAmount">Recipient</label>
+                                            <div className="controls">
+                                                <input type="text" id={"inputTokenAmount"} onChange={(e) => setRecipientAddress(Helpers.checksumAddress(e.target.value))} value={recipientAddress || ""} placeholder={"0x000..."} className="form-control" />
                                             </div>
                                         </div>
                                     </div>
