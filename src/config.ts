@@ -1,5 +1,5 @@
 const Config = {
-    chainId: 42,
+    chainId: 1,
     supportedChainIds: [1, 3, 4, 5, 42],
     infura: {
         prefix: "kovan",
