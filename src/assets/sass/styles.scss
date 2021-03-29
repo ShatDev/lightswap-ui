@@ -1,0 +1,23 @@
+@import "~bootstrap/scss/bootstrap";
+
+body {
+    background: #333;
+}
+
+input {
+    font-family: "Courier", monospace;
+}
+
+.card {
+    border-radius: 0;
+}
+
+.btn {
+    border-radius: 0;
+}
+
+.form-group {
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
