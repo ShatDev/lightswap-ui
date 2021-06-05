@@ -7,7 +7,7 @@ export default function Navbar(): JSX.Element {
         <>
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
                 <Link to={"/"} className="navbar-brand">
-                    ezswap
+                    lightswap
                 </Link>
                 <button className="navbar-toggler" type="button" data-toggle="collapse"
                     data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"

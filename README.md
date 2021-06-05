@@ -1,11 +1,10 @@
-# ezswap
+# Lightswap (WIP)
 
-No-fuzz AMM swap tool.
+Lightweight, self-hosted and no-fuzz AMM swap tool.
 
 ## To do
 
 * Ledger support
-* 
 
 ## Available Scripts
 
